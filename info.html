@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Signup Details</title>
+  <link rel="stylesheet" href="signUp.css"/>
+</head>
+<body>
+  <div class="signup-container">
+    <h2 id="formTitle">Signup Details</h2>
+    <form id="detailsForm" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="name">Full Name / Company Name</label>
+        <input type="text" id="name" name="name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone" required />
+      </div>
+
+      <div class="form-group">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" required />
+      </div>
+
+      <div class="form-group">
+        <label for="profileUpload">Profile Picture / Company Logo</label>
+        <input type="file" id="profileUpload" name="profileUpload" accept="image/*" required />
+      </div>
+
+      <div class="form-group" id="dobField" style="display: none;">
+        <label for="dob">Date of Birth</label>
+        <input type="date" id="dob" name="dob" />
+      </div>
+
+      <div class="form-group" id="ageField" style="display: none;">
+        <label for="age">Age</label>
+        <input type="number" id="age" name="age" readonly />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+      </div>
+
+      <div class="form-group">
+        <label for="cpassword">Confirm Password</label>
+        <input type="password" id="cpassword" name="cpassword" required />
+      </div>
+
+      <div class="form-group" id="companyField" style="display: none;">
+        <label for="description">Company Description</label>
+        <textarea id="description" name="description" rows="4" placeholder="Tell us about your company..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit</button>
+    </form>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role') || 'applicant';
+
+    document.getElementById('formTitle').textContent = role === 'company' ? 'Company Information' : 'Applicant Information';
+    if (role === 'company') {
+      document.getElementById('companyField').style.display = 'block';
+    } else {
+      document.getElementById('dobField').style.display = 'block';
+      document.getElementById('ageField').style.display = 'block';
+    }
+
+    const dobInput = document.getElementById('dob');
+    const ageInput = document.getElementById('age');
+    dobInput?.addEventListener('change', () => {
+      const dob = new Date(dobInput.value);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      if (
+        today.getMonth() < dob.getMonth() ||
+        (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())
+      ) {
+        age--;
+      }
+      ageInput.value = age;
+    });
+
+    document.getElementById('detailsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const password = document.getElementById('password').value;
+      const cpassword = document.getElementById('cpassword').value;
+      const profileUpload = document.getElementById('profileUpload').files[0];
+
+      const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+      if (!emailPattern.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+
+      if (!/^\\d{10}$/.test(phone)) {
+        alert('Phone number must be exactly 10 digits.');
+        return;
+      }
+
+      if (password !== cpassword) {
+        alert('Passwords do not match.');
+        return;
+      }
+
+      if (!profileUpload || !profileUpload.type.startsWith('image/')) {
+        alert('Please upload a valid image.');
+        return;
+      }
+
+      const formData = new FormData(this);
+      formData.append('role', role);
+
+      fetch('http://localhost:3000/api/signup', {
+        method: 'POST',
+        body: formData,
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert('Signup successful!');
+        this.reset();
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        alert('Something went wrong.');
+      });
+    });
+  </script>
+</body>
+</html>
